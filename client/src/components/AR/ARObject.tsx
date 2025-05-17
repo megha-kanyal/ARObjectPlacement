@@ -3,6 +3,54 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useARStore } from "@/lib/stores/useARStore";
 
+// Create a wood texture directly in memory
+const createWoodTexture = () => {
+  // Create a canvas for the texture
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    // Fill with a wood-like color
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, 0, 128, 128);
+    
+    // Add some grain
+    for (let i = 0; i < 2000; i++) {
+      const x = Math.random() * 128;
+      const y = Math.random() * 128;
+      const size = Math.random() * 3;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    
+    // Add some wood grain lines
+    for (let i = 0; i < 10; i++) {
+      const y = i * 12 + Math.random() * 5;
+      ctx.strokeStyle = `rgba(60, 30, 0, ${Math.random() * 0.2 + 0.1})`;
+      ctx.lineWidth = 1 + Math.random() * 2;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      
+      // Create a wavy line
+      for (let x = 0; x < 128; x += 10) {
+        const yOffset = y + Math.sin(x * 0.05) * 5;
+        ctx.lineTo(x, yOffset);
+      }
+      
+      ctx.stroke();
+    }
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+  
+  return texture;
+};
+
 interface ARObjectProps {
   object: {
     id: string;
@@ -18,11 +66,28 @@ interface ARObjectProps {
 const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
   const { setSelectedObjectId, editMode, updateObjectTransform } = useARStore();
   const meshRef = useRef<THREE.Mesh>(null);
+  const [localTexture, setLocalTexture] = useState<THREE.Texture | null>(null);
+  
+  // Create our own texture on component mount
+  useEffect(() => {
+    // Create a texture directly in memory
+    const texture = createWoodTexture();
+    setLocalTexture(texture);
+    
+    return () => {
+      // Clean up texture when component unmounts
+      if (texture) {
+        texture.dispose();
+      }
+    };
+  }, []);
   
   // Apply the texture properly or create a fallback material
   const textureMaterial = React.useMemo(() => {
-    // Create a fallback material if texture is null
-    if (!woodTexture) {
+    // Use our local texture first, fall back to passed texture, or create a fallback material
+    const textureToUse = localTexture || woodTexture;
+    
+    if (!textureToUse) {
       return new THREE.MeshStandardMaterial({
         color: 0x8B4513, // Brown color
         roughness: 0.7,
@@ -31,15 +96,15 @@ const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
     }
     
     // Apply the texture
-    woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
-    woodTexture.repeat.set(1, 1);
+    textureToUse.wrapS = textureToUse.wrapT = THREE.RepeatWrapping;
+    textureToUse.repeat.set(1, 1);
     
     return new THREE.MeshStandardMaterial({
-      map: woodTexture,
+      map: textureToUse,
       roughness: 0.7,
       metalness: 0.1
     });
-  }, [woodTexture]);
+  }, [localTexture, woodTexture]);
   
   // Material for the selection outline
   const outlineMaterial = React.useMemo(() => 
