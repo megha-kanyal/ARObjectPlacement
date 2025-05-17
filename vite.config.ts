@@ -20,14 +20,25 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared"),
     },
   },
+  server: {
+    host: true,
+    hmr: {
+      clientPort: 443,
+    },
+  },
   root: path.resolve(__dirname, "client"),
   base: "/ARObjectPlacement/", // Add base path for GitHub Pages
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, "client/public/index.html")
+      input: path.resolve(__dirname, "client/index.html"),
+      output: {
+        // Ensure assets have the correct paths
+        manualChunks: undefined,
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     }
   },
