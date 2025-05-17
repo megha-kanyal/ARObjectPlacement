@@ -33,8 +33,7 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
   const sceneRef = useRef<THREE.Scene>(null);
   
   // We no longer need to create and pass a texture
-  // Each ARObject will create its own texture
-  const [woodTexture] = useState<THREE.Texture | null>(null);
+  // Each ARObject will create its own texture internally
   
   useEffect(() => {
     if (videoElement) {
@@ -143,7 +142,6 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
         <ARObject 
           key={object.id}
           object={object}
-          woodTexture={woodTexture}
           isSelected={selectedObjectId === object.id}
         />
       ))}

@@ -5,13 +5,18 @@ import { useARStore } from "@/lib/stores/useARStore";
 
 // Create a wood texture directly in memory
 const createWoodTexture = () => {
-  // Create a canvas for the texture
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  
-  if (ctx) {
+  try {
+    // Create a canvas for the texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.warn('Could not get 2D context for canvas texture');
+      return null;
+    }
+    
     // Fill with a wood-like color
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(0, 0, 128, 128);
@@ -41,14 +46,22 @@ const createWoodTexture = () => {
       
       ctx.stroke();
     }
+    
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    // Set properties safely
+    if (texture) {
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 2);
+    }
+    
+    return texture;
+  } catch (error) {
+    console.error('Error creating wood texture:', error);
+    return null;
   }
-  
-  // Create texture from canvas
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(2, 2);
-  
-  return texture;
 };
 
 interface ARObjectProps {
@@ -59,11 +72,10 @@ interface ARObjectProps {
     rotation: [number, number, number];
     scale: [number, number, number];
   };
-  woodTexture: THREE.Texture | null;
   isSelected: boolean;
 }
 
-const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
+const ARObject = ({ object, isSelected }: ARObjectProps) => {
   const { setSelectedObjectId, editMode, updateObjectTransform } = useARStore();
   const meshRef = useRef<THREE.Mesh>(null);
   const [localTexture, setLocalTexture] = useState<THREE.Texture | null>(null);
@@ -84,27 +96,34 @@ const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
   
   // Apply the texture properly or create a fallback material
   const textureMaterial = React.useMemo(() => {
-    // Use our local texture first, fall back to passed texture, or create a fallback material
-    const textureToUse = localTexture || woodTexture;
+    // Use our local texture or create a fallback material
+    const textureToUse = localTexture;
     
-    if (!textureToUse) {
-      return new THREE.MeshStandardMaterial({
-        color: 0x8B4513, // Brown color
-        roughness: 0.7,
-        metalness: 0.1
-      });
-    }
-    
-    // Apply the texture
-    textureToUse.wrapS = textureToUse.wrapT = THREE.RepeatWrapping;
-    textureToUse.repeat.set(1, 1);
-    
-    return new THREE.MeshStandardMaterial({
-      map: textureToUse,
+    // Always create a fallback material first
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x8B4513, // Brown color
       roughness: 0.7,
       metalness: 0.1
     });
-  }, [localTexture, woodTexture]);
+    
+    // Only apply texture if it exists
+    if (textureToUse) {
+      try {
+        // Apply the texture with error handling
+        textureToUse.wrapS = THREE.RepeatWrapping;
+        textureToUse.wrapT = THREE.RepeatWrapping;
+        textureToUse.repeat.set(1, 1);
+        
+        // Set the texture map
+        material.map = textureToUse;
+      } catch (error) {
+        console.warn('Error applying texture:', error);
+        // Continue with the fallback material
+      }
+    }
+    
+    return material;
+  }, [localTexture]);
   
   // Material for the selection outline
   const outlineMaterial = React.useMemo(() => 
