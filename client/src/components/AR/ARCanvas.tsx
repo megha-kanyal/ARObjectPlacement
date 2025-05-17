@@ -99,7 +99,7 @@ const ARCanvas = () => {
       {/* Three.js Canvas overlay */}
       {videoReady && (
         <Canvas
-          className="absolute top-0 left-0 z-10 pointer-events-auto"
+          className="absolute top-0 left-0 z-1 pointer-events-auto"
           camera={{ 
             position: [0, 1.5, 3], 
             fov: 75,

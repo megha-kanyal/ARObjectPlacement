@@ -52,8 +52,8 @@ function App() {
         <ARCanvas />
       </Suspense>
 
-      {/* Floating UI elements */}
-      <div className="absolute top-0 left-0 w-full">
+      {/* Floating UI elements - added higher z-index to ensure they're above the canvas */}
+      <div className="absolute top-0 left-0 w-full z-10">
         {/* Instructions Modal */}
         {showInstructions && (
           <div className="m-4 p-4 bg-black/70 rounded-lg text-white">
@@ -78,8 +78,8 @@ function App() {
         )}
       </div>
 
-      {/* Bottom Menu */}
-      <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col gap-4">
+      {/* Bottom Menu - added z-index and pointer-events to ensure buttons are clickable */}
+      <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col gap-4 z-10 pointer-events-auto">
         <ObjectMenu />
         
         <div className="flex justify-between items-center">
