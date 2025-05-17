@@ -21,8 +21,9 @@ export default defineConfig({
     },
   },
   root: path.resolve(__dirname, "client"),
+  base: "/ARObjectPlacement/", // Add base path for GitHub Pages
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
   },
   // Add support for large models and audio files
