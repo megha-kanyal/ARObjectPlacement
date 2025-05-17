@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { PerspectiveCamera, useTexture } from "@react-three/drei";
+import { PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import PlacementIndicator from "./PlacementIndicator";
 import ARObject from "./ARObject";
@@ -8,6 +8,37 @@ import ARControls from "./ARControls";
 import { useARStore } from "@/lib/stores/useARStore";
 import { estimateSurfaceNormal, detectSurfaces } from "@/lib/ar-utils";
 import { toast } from "sonner";
+
+// Create a static texture that can be reused
+const createWoodTexture = () => {
+  // Create a canvas for the texture
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    // Fill with a wood-like color
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, 0, 64, 64);
+    
+    // Add some grain
+    for (let i = 0; i < 1000; i++) {
+      const x = Math.random() * 64;
+      const y = Math.random() * 64;
+      const size = Math.random() * 2;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+  
+  return texture;
+};
 
 interface ARSceneProps {
   videoElement: HTMLVideoElement | null;
@@ -30,26 +61,17 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
   // Reference to the scene for raycasting
   const sceneRef = useRef<THREE.Scene>(null);
   
-  // Create a texture directly with a data URL to avoid loading issues
+  // Use our canvas-based texture to avoid loading issues
   const [woodTexture, setWoodTexture] = useState<THREE.Texture | null>(null);
   
   useEffect(() => {
-    // Create a brown wood-like texture directly from a data URL
-    // This avoids any external file loading issues
-    const brownWoodTexture = new THREE.TextureLoader().load(
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAn0lEQVR42mP8z8AAAAGMQ9kBjCPWAaMOGHXAqANGHTDqgFEHDGkHMDEyMjIwMzExMDIwMTAzMYKZjAwszEwMzMxMDCzMTAyszEwM7KxMDOysTAwcrMwMnGzMDFxszAw8bMwMvOzMDHwczAz8HCwMAhwsDIIcLAxCnKwMwpysDCJcrAxi3KwM4jxsDBI8bAySvGwMUnzsDAcYmRgkJHnZGAD5shV1CqJ8ggAAAABJRU5ErkJggg=='
-    );
-    
-    // Set repeat and wrapping
-    brownWoodTexture.wrapS = brownWoodTexture.wrapT = THREE.RepeatWrapping;
-    brownWoodTexture.repeat.set(2, 2);
-    
-    // Set the texture
-    setWoodTexture(brownWoodTexture);
+    // Create a texture using our helper function
+    const texture = createWoodTexture();
+    setWoodTexture(texture);
     
     return () => {
-      if (brownWoodTexture) {
-        brownWoodTexture.dispose();
+      if (texture) {
+        texture.dispose();
       }
     };
   }, []);
