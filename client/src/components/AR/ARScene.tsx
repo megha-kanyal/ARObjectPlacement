@@ -31,7 +31,9 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
   const sceneRef = useRef<THREE.Scene>(null);
   
   // Preload textures
-  const woodTexture = useTexture("/textures/wood.jpg");
+  // Use import.meta.env.BASE_URL to get the correct base path for GitHub Pages
+  const basePath = import.meta.env.BASE_URL || '/';
+  const woodTexture = useTexture(`${basePath}textures/wood.jpg`);
   
   useEffect(() => {
     if (videoElement) {
