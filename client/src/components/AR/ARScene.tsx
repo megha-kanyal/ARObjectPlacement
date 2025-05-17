@@ -30,37 +30,26 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
   // Reference to the scene for raycasting
   const sceneRef = useRef<THREE.Scene>(null);
   
-  // Create a fallback texture in case loading fails
+  // Create a texture directly with a data URL to avoid loading issues
   const [woodTexture, setWoodTexture] = useState<THREE.Texture | null>(null);
   
   useEffect(() => {
-    // Create a basic brown texture as fallback
-    const fallbackTexture = new THREE.TextureLoader().load(
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    // Create a brown wood-like texture directly from a data URL
+    // This avoids any external file loading issues
+    const brownWoodTexture = new THREE.TextureLoader().load(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAn0lEQVR42mP8z8AAAAGMQ9kBjCPWAaMOGHXAqANGHTDqgFEHDGkHMDEyMjIwMzExMDIwMTAzMYKZjAwszEwMzMxMDCzMTAyszEwM7KxMDOysTAwcrMwMnGzMDFxszAw8bMwMvOzMDHwczAz8HCwMAhwsDIIcLAxCnKwMwpysDCJcrAxi3KwM4jxsDBI8bAySvGwMUnzsDAcYmRgkJHnZGAD5shV1CqJ8ggAAAABJRU5ErkJggg=='
     );
     
-    // Try to load the actual texture
-    const textureLoader = new THREE.TextureLoader();
-    const basePath = window.location.pathname.includes('/ARObjectPlacement/') ? '/ARObjectPlacement/' : '/';
+    // Set repeat and wrapping
+    brownWoodTexture.wrapS = brownWoodTexture.wrapT = THREE.RepeatWrapping;
+    brownWoodTexture.repeat.set(2, 2);
     
-    textureLoader.load(
-      `${basePath}textures/wood.jpg`,
-      (loadedTexture) => {
-        setWoodTexture(loadedTexture);
-      },
-      undefined,
-      (error) => {
-        console.log('Error loading texture, using fallback', error);
-        setWoodTexture(fallbackTexture);
-      }
-    );
-    
-    // Initial fallback
-    setWoodTexture(fallbackTexture);
+    // Set the texture
+    setWoodTexture(brownWoodTexture);
     
     return () => {
-      if (woodTexture) {
-        woodTexture.dispose();
+      if (brownWoodTexture) {
+        brownWoodTexture.dispose();
       }
     };
   }, []);
