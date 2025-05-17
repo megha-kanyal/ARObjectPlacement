@@ -11,7 +11,7 @@ interface ARObjectProps {
     rotation: [number, number, number];
     scale: [number, number, number];
   };
-  woodTexture: THREE.Texture;
+  woodTexture: THREE.Texture | null;
   isSelected: boolean;
 }
 
@@ -19,8 +19,18 @@ const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
   const { setSelectedObjectId, editMode, updateObjectTransform } = useARStore();
   const meshRef = useRef<THREE.Mesh>(null);
   
-  // Apply the texture properly
+  // Apply the texture properly or create a fallback material
   const textureMaterial = React.useMemo(() => {
+    // Create a fallback material if texture is null
+    if (!woodTexture) {
+      return new THREE.MeshStandardMaterial({
+        color: 0x8B4513, // Brown color
+        roughness: 0.7,
+        metalness: 0.1
+      });
+    }
+    
+    // Apply the texture
     woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
     woodTexture.repeat.set(1, 1);
     
@@ -90,31 +100,31 @@ const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
             {/* Seat */}
             <mesh position={[0, 0.4, 0]} scale={[1, 0.1, 1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
             
             {/* Backrest */}
             <mesh position={[0, 0.9, -0.45]} scale={[1, 1, 0.1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
             
             {/* Legs */}
             <mesh position={[0.4, 0, 0.4]} scale={[0.1, 0.8, 0.1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
             <mesh position={[-0.4, 0, 0.4]} scale={[0.1, 0.8, 0.1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
             <mesh position={[0.4, 0, -0.4]} scale={[0.1, 0.8, 0.1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
             <mesh position={[-0.4, 0, -0.4]} scale={[0.1, 0.8, 0.1]}>
               <boxGeometry />
-              <meshStandardMaterial map={woodTexture} />
+              {textureMaterial}
             </mesh>
           </group>
         );
@@ -138,11 +148,7 @@ const ARObject = ({ object, woodTexture, isSelected }: ARObjectProps) => {
           receiveShadow
         >
           {renderGeometry()}
-          <meshStandardMaterial 
-            map={woodTexture}
-            roughness={0.7}
-            metalness={0.1}
-          />
+          {textureMaterial}
         </mesh>
         
         {/* Selection outline - only shown when selected */}

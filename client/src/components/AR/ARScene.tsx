@@ -30,10 +30,40 @@ const ARScene = ({ videoElement }: ARSceneProps) => {
   // Reference to the scene for raycasting
   const sceneRef = useRef<THREE.Scene>(null);
   
-  // Preload textures
-  // Use import.meta.env.BASE_URL to get the correct base path for GitHub Pages
-  const basePath = import.meta.env.BASE_URL || '/';
-  const woodTexture = useTexture(`${basePath}textures/wood.jpg`);
+  // Create a fallback texture in case loading fails
+  const [woodTexture, setWoodTexture] = useState<THREE.Texture | null>(null);
+  
+  useEffect(() => {
+    // Create a basic brown texture as fallback
+    const fallbackTexture = new THREE.TextureLoader().load(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    );
+    
+    // Try to load the actual texture
+    const textureLoader = new THREE.TextureLoader();
+    const basePath = window.location.pathname.includes('/ARObjectPlacement/') ? '/ARObjectPlacement/' : '/';
+    
+    textureLoader.load(
+      `${basePath}textures/wood.jpg`,
+      (loadedTexture) => {
+        setWoodTexture(loadedTexture);
+      },
+      undefined,
+      (error) => {
+        console.log('Error loading texture, using fallback', error);
+        setWoodTexture(fallbackTexture);
+      }
+    );
+    
+    // Initial fallback
+    setWoodTexture(fallbackTexture);
+    
+    return () => {
+      if (woodTexture) {
+        woodTexture.dispose();
+      }
+    };
+  }, []);
   
   useEffect(() => {
     if (videoElement) {
